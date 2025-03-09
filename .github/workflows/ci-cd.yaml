@@ -1,0 +1,36 @@
+name: Build and Deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # For OIDC token
+      contents: read   # For checkout
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole  # Adjust role name if different
+          aws-region: us-east-2
+          role-session-name: GitHubActions
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build and Push Docker Image
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
+        run: |
+          docker build -t subnet-calculator:latest .
+          docker tag subnet-calculator:latest $ECR_REGISTRY/lab/subnet-calculator:latest
+          docker push $ECR_REGISTRY/lab/subnet-calculator:latest
+      - name: Deploy to EKS
+        run: |
+          aws eks update-kubeconfig --region us-east-2 --name lab-eks-cluster
+          helm upgrade --install subnet-calculator ./helm --namespace lab --create-namespace \
+            --set image.repository=$ECR_REGISTRY/lab/subnet-calculator \
+            --set image.tag=latest

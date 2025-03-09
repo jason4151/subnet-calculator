@@ -1,0 +1,44 @@
+/* src/App.css */
+.app {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 20px auto;
+  text-align: center;
+}
+
+input {
+  padding: 8px;
+  margin: 5px 10px;
+  width: 150px;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+p {
+  color: #666;
+}
