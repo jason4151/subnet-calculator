@@ -2,7 +2,6 @@
 node_modules/
 npm-debug.log
 yarn-error.log
-package-lock.json  # Optional: include if you use npm and don't want lockfile conflicts
 
 # Vite build output
 dist/
@@ -28,8 +27,7 @@ Thumbs.db  # Windows-specific
 .env.production.local
 
 # Docker
-Dockerfile.*  # Exclude any variant Dockerfiles (e.g., Dockerfile.dev), but keep Dockerfile
-*.dockerignore
+Dockerfile.*
 
 # Helm
 helm/Chart.lock  # Helm dependency lock file, if you use dependencies (not needed here yet)

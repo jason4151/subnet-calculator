@@ -1,37 +1,37 @@
 # Subnet Calculator
 
-A simple web application built with React and Vite to calculate and display subnets from a given IP network. Deployed to an AWS EKS cluster using Helm and GitHub Actions.
+React + Vite app that lists subnets from a base CIDR. Image goes to ECR; Helm deploys it to the OpenTofu lab EKS **Auto Mode** cluster.
 
-## Overview
+## Stack
 
-This tool allows users to input a base network (e.g., `10.0.0.0/16`) and a target subnet mask (e.g., `/21`) to generate a table of subnets, including their addresses, ranges, and usable IPs. It’s designed for network planning, such as organizing subnets across an AWS environment.
+- **App**: React 19, Vite
+- **Image**: `lab/subnet-calculator` in ECR (`us-east-2`)
+- **Cluster**: `lab-eks-cluster` (EKS Auto Mode), namespace `lab`
+- **Service**: internet-facing NLB (`loadBalancerClass: eks.amazonaws.com/nlb`)
+- **CI**: reusable workflows in [`jason4151/gha-shared`](https://github.com/jason4151/gha-shared)
+  - Push / PR: lint, build, Docker build (no AWS)
+  - **Actions → CI and deploy → Run workflow**: push to ECR and Helm upgrade (needs the lab up)
 
-- **Frontend**: React + Vite
-- **Container**: Docker (Nginx serving the static app)
-- **Deployment**: AWS EKS (`lab-eks-cluster`) in `us-east-2`
-- **CI/CD**: GitHub Actions with OIDC
-- **Orchestration**: Helm
+## Local
 
-## Prerequisites
-
-- **AWS Account**: With an EKS cluster (`lab-eks-cluster`) in `us-east-2`.
-- **ECR Repository**: For storing the Docker image.
-- **GitHub OIDC**: Configured with an IAM role (e.g., `GitHubActionsRole`) allowing `ecr:*` and `eks:*` actions for `repo:jason4151/subnet-calculator`.
-- **Local Tools**: Node.js, Docker, Helm, AWS CLI, `kubectl`.
-
-## Setup Instructions
-
-### 1. Clone the Repository
 ```bash
-git clone https://github.com/jason4151/subnet-calculator.git
-cd subnet-calculator
-npm install
+npm ci
 npm run dev
 ```
-### 2. Build Docker Image
-```bash
-docker build -t subnet-calculator:latest .
-docker run -p 80:80 subnet-calculator:latest
-```
-Test at http://localhost.
 
+```bash
+docker build -t subnet-calculator:local .
+docker run --rm -p 8080:80 subnet-calculator:local
+```
+
+Open http://localhost:8080.
+
+## Deploy (when the OpenTofu lab is running)
+
+Repo secret required: `AWS_ACCOUNT_ID` (same GitHub OIDC role as OpenTofu: `GitHubActionsRole`).
+
+1. Apply the OpenTofu lab (VPC with ELB subnet tags, ECR, EKS Auto Mode).
+2. In this repo: **Actions → CI and deploy → Run workflow**.
+3. `kubectl -n lab get svc subnet-calculator` for the NLB hostname.
+
+Helm chart lives in `helm/`. Auto Mode node role already has ECR pull; no imagePullSecret.

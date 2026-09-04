@@ -22,7 +22,7 @@ function App() {
       return;
     }
 
-    const ipInt = ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
+    const ipInt = ip.split('.').reduce((acc, octet) => ((acc << 8) + parseInt(octet, 10)) >>> 0, 0);
     const subnetSize = 2 ** (32 - targetMaskNum);
     const subnetCount = 2 ** (targetMaskNum - baseMaskNum);
     const newSubnets = [];
@@ -43,9 +43,9 @@ function App() {
 
   const intToIp = (int) => {
     return [
-      (int >> 24) & 255,
-      (int >> 16) & 255,
-      (int >> 8) & 255,
+      (int >>> 24) & 255,
+      (int >>> 16) & 255,
+      (int >>> 8) & 255,
       int & 255,
     ].join('.');
   };

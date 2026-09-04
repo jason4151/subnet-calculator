@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.github
+helm
+*.md
+.gitignore
+.DS_Store
+npm-debug.log
