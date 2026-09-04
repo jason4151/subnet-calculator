@@ -1,107 +1,114 @@
-// src/App.jsx
-import { useState } from 'react';
-import './App.css';
+import { useState } from 'react'
+import './App.css'
+import { calculateSubnets } from './subnet.js'
 
-function App() {
-  const [network, setNetwork] = useState('');
-  const [mask, setMask] = useState('');
-  const [subnets, setSubnets] = useState([]);
+export default function App() {
+  const [network, setNetwork] = useState('10.33.0.0/22')
+  const [mask, setMask] = useState('26')
+  const [error, setError] = useState('')
+  const [result, setResult] = useState(null)
 
-  const calculateSubnets = () => {
-    if (!network || !mask) {
-      alert('Please enter a network and mask.');
-      return;
+  const onSubmit = (e) => {
+    e.preventDefault()
+    try {
+      setResult(calculateSubnets(network, mask))
+      setError('')
+    } catch (err) {
+      setResult(null)
+      setError(err.message)
     }
-
-    const [ip, baseMask] = network.split('/');
-    const baseMaskNum = parseInt(baseMask);
-    const targetMaskNum = parseInt(mask);
-
-    if (!ip || isNaN(baseMaskNum) || isNaN(targetMaskNum) || baseMaskNum >= targetMaskNum || targetMaskNum > 32) {
-      alert('Invalid input! Ensure base mask < target mask (e.g., 10.0.0.0/16, 21).');
-      return;
-    }
-
-    const ipInt = ip.split('.').reduce((acc, octet) => ((acc << 8) + parseInt(octet, 10)) >>> 0, 0);
-    const subnetSize = 2 ** (32 - targetMaskNum);
-    const subnetCount = 2 ** (targetMaskNum - baseMaskNum);
-    const newSubnets = [];
-
-    for (let i = 0; i < subnetCount; i++) {
-      const start = ipInt + i * subnetSize;
-      const end = start + subnetSize - 1;
-      newSubnets.push({
-        address: intToIp(start),
-        mask: targetMaskNum,
-        range: `${intToIp(start)} - ${intToIp(end)}`,
-        usable: subnetSize - 2,
-      });
-    }
-
-    setSubnets(newSubnets);
-  };
-
-  const intToIp = (int) => {
-    return [
-      (int >>> 24) & 255,
-      (int >>> 16) & 255,
-      (int >>> 8) & 255,
-      int & 255,
-    ].join('.');
-  };
+  }
 
   return (
-    <div className="app">
-      <h1>Subnet Calculator</h1>
-      <div>
+    <div className="page">
+      <header>
+        <h1>Subnet calculator</h1>
+        <p className="lede">
+          Split a CIDR into equal child subnets. Host bits in the network field
+          are aligned down to the prefix.
+        </p>
+      </header>
+
+      <form onSubmit={onSubmit} className="form">
         <label>
-          Network (e.g., 10.0.0.0/16):
+          Network
           <input
             type="text"
             value={network}
             onChange={(e) => setNetwork(e.target.value)}
-            placeholder="10.0.0.0/16"
+            placeholder="10.33.0.0/22"
+            autoComplete="off"
+            spellCheck="false"
           />
         </label>
         <label>
-          Mask (e.g., 21):
+          Target prefix
           <input
-            type="number"
+            type="text"
             value={mask}
             onChange={(e) => setMask(e.target.value)}
-            placeholder="21"
-            min="1"
-            max="32"
+            placeholder="/26"
+            autoComplete="off"
+            spellCheck="false"
           />
         </label>
-        <button onClick={calculateSubnets}>Calculate</button>
-      </div>
-      {subnets.length > 0 ? (
-        <table>
-          <thead>
-            <tr>
-              <th>Address</th>
-              <th>Mask</th>
-              <th>Range</th>
-              <th>Usable IPs</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subnets.map((subnet, index) => (
-              <tr key={index}>
-                <td>{subnet.address}</td>
-                <td>/{subnet.mask}</td>
-                <td>{subnet.range}</td>
-                <td>{subnet.usable}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>No subnets yet—enter a network and mask above.</p>
-      )}
-    </div>
-  );
-}
+        <button type="submit">Calculate</button>
+      </form>
 
-export default App;
+      {error ? <p className="error" role="alert">{error}</p> : null}
+
+      {result ? (
+        <section className="results">
+          <p className="summary">
+            {result.aligned ? (
+              <>
+                Aligned <code>{result.original}/{result.prefix}</code> to{' '}
+                <code>
+                  {result.network}/{result.prefix}
+                </code>
+                .{' '}
+              </>
+            ) : null}
+            {result.count.toLocaleString()} × /{result.target}
+            {result.count === 1 ? ' subnet' : ' subnets'}
+            {' '}({result.size.toLocaleString()} addresses each).
+            {result.truncated
+              ? ` Showing the first ${result.maxRows.toLocaleString()} of ${result.count.toLocaleString()}. Narrow the range if you need the rest.`
+              : null}
+          </p>
+
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Network</th>
+                  <th>Range</th>
+                  <th>First usable</th>
+                  <th>Last usable</th>
+                  <th>Broadcast</th>
+                  <th>Usable</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.subnets.map((s) => (
+                  <tr key={`${s.network}/${s.prefix}`}>
+                    <td>
+                      <code>
+                        {s.network}/{s.prefix}
+                      </code>
+                    </td>
+                    <td>{s.range}</td>
+                    <td>{s.firstUsable}</td>
+                    <td>{s.lastUsable}</td>
+                    <td>{s.broadcast}</td>
+                    <td>{s.usable}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+    </div>
+  )
+}

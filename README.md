@@ -1,6 +1,6 @@
 # Subnet Calculator
 
-React + Vite app that lists subnets from a base CIDR. Image goes to ECR; Helm deploys it to the OpenTofu lab EKS **Auto Mode** cluster.
+React + Vite app that splits a CIDR into equal child subnets (aligns host addresses, RFC 3021 `/31`/`/32`, caps huge tables). Image goes to ECR; Helm deploys it to the OpenTofu lab EKS **Auto Mode** cluster.
 
 ## Stack
 
@@ -16,6 +16,7 @@ React + Vite app that lists subnets from a base CIDR. Image goes to ECR; Helm de
 
 ```bash
 npm ci
+npm test
 npm run dev
 ```
 
