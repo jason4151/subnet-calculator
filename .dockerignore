@@ -7,3 +7,5 @@ helm
 .gitignore
 .DS_Store
 npm-debug.log
+eslint.config.js
+src/**/*.test.js

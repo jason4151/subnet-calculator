@@ -7,7 +7,7 @@ React + Vite app that splits a CIDR into equal child subnets (aligns host addres
 - **App**: React 19, Vite
 - **Image**: `lab/subnet-calculator` in ECR (`us-east-2`)
 - **Cluster**: `lab-eks-cluster` (EKS Auto Mode), namespace `lab`
-- **Service**: internet-facing NLB (`loadBalancerClass: eks.amazonaws.com/nlb`)
+- **Service**: internet-facing NLB (`loadBalancerClass: eks.amazonaws.com/nlb`, pod port 8080)
 - **CI**: reusable workflows in [`jason4151/gha-shared`](https://github.com/jason4151/gha-shared)
   - Push / PR: lint, build, Docker build (no AWS)
   - **Actions → CI and deploy → Run workflow**: push to ECR and Helm upgrade (needs the lab up)
@@ -22,7 +22,7 @@ npm run dev
 
 ```bash
 docker build -t subnet-calculator:local .
-docker run --rm -p 8080:80 subnet-calculator:local
+docker run --rm -p 8080:8080 subnet-calculator:local
 ```
 
 Open http://localhost:8080.

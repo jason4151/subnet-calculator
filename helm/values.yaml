@@ -8,12 +8,12 @@ image:
 service:
   type: LoadBalancer
   port: 80
-  # EKS Auto Mode Network Load Balancer
+  targetPort: 8080
+  # EKS Auto Mode NLB. Do not set aws-load-balancer-type — Auto Mode uses loadBalancerClass.
   loadBalancerClass: eks.amazonaws.com/nlb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: external
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
     service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
     service.beta.kubernetes.io/aws-load-balancer-ip-address-type: ipv4
 
 resources:
@@ -22,3 +22,18 @@ resources:
     memory: 32Mi
   limits:
     memory: 64Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 101
+  runAsGroup: 101
+  fsGroup: 101
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
